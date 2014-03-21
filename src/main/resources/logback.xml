@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+  <appender name="main" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/tmp/kerberosexample.log</file>
+    <append>true</append>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>/tmp/kerberosexample.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+  <appender name="tests" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/tmp/tests.log</file>
+    <append>true</append>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>/tmp/tests.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+  <logger name="net.tirasa.kerberosexample" additivity="false">
+    <level value="DEBUG"/>
+    <appender-ref ref="tests"/>
+  </logger>
+  
+  <logger name="org.springframework" additivity="false">
+    <level value="INFO"/>
+    <appender-ref ref="main"/>
+  </logger>
+  
+  <logger name="org.apache.http" additivity="false">
+    <level value="OFF"/>
+    <appender-ref ref="main"/>
+  </logger>
+  
+  <logger name="ch.qos.logback">
+    <level value="info" />
+    <appender-ref ref="main"/>
+  </logger>
+  
+  <logger name="c.q.l.core.rolling">
+    <level value="error" />
+    <appender-ref ref="main"/>
+  </logger>
+    
+  <root>
+    <level value="DEBUG"/>
+    <appender-ref ref="main"/>
+  </root>
+</configuration>
