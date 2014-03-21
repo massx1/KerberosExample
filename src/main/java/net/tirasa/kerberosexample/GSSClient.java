@@ -1,12 +1,17 @@
 package net.tirasa.kerberosexample;
 
+import static net.tirasa.kerberosexample.Commons.KERB_V5_OID;
+import static net.tirasa.kerberosexample.Commons.KRB5_PRINCIPAL_NAME_OID;
 import static net.tirasa.kerberosexample.Commons.LOG;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.security.AccessController;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.auth.login.LoginException;
@@ -20,15 +25,17 @@ import sun.misc.BASE64Encoder;
 public class GSSClient extends Commons {
 
     public static void main(final String args[]) throws LoginException, NoSuchAlgorithmException, KeyManagementException,
-            IOException {
+            IOException, PrivilegedActionException {
         setProperties();
-        final String ticket = retrieveTicket("HTTP/olmo.tirasa.net");
+        final String ticket = retrieveTicket(SERVICE_PRINCIPAL_NAME);
         LOG.debug("Calling server with ticket {}", ticket);
         postWithTicket(ticket);
     }
 
-    public static String retrieveTicket(final String applicationPrincipal) throws LoginException {
-        final Subject subject = login();
+    public static String retrieveTicket(final String applicationPrincipal) throws LoginException,
+            PrivilegedActionException, MalformedURLException {
+//        final Subject subject = login();
+        final Subject subject = kerberosLogin();
 
         LOG.debug("Authenticated with {}", subject);
 
@@ -43,12 +50,14 @@ public class GSSClient extends Commons {
         final TicketCreatorAction action = new TicketCreatorAction(userPrincipal.getName(), applicationPrincipal);
         final StringBuffer outputBuffer = new StringBuffer();
         action.setOutputBuffer(outputBuffer);
-        Subject.doAsPrivileged(subject, action, null);
+//        Subject.doAsPrivileged(subject, action, null);
+
+        Subject.doAsPrivileged(subject, action, AccessController.getContext());
 
         return outputBuffer.toString();
     }
 
-    private static class TicketCreatorAction implements PrivilegedAction {
+    private static class TicketCreatorAction implements PrivilegedExceptionAction {
 
         private final String userPrincipal;
 

@@ -1,9 +1,11 @@
 package net.tirasa.kerberosexample;
 
+import com.sun.security.auth.module.Krb5LoginModule;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.KeyManagementException;
@@ -13,7 +15,9 @@ import java.security.Principal;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -32,13 +36,11 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.auth.SPNegoSchemeFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
@@ -51,6 +53,8 @@ import org.slf4j.LoggerFactory;
 public abstract class Commons {
 
     protected static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Commons.class);
+
+    protected static final String SERVICE_PRINCIPAL_NAME = "ldap/olmo.tirasa.net";
 
     protected final static Oid KERB_V5_OID;
 
@@ -90,7 +94,6 @@ public abstract class Commons {
 
         final DefaultHttpClient httpclient = new DefaultHttpClient(ccm);
 
-        httpclient.getAuthSchemes().register(AuthPolicy.SPNEGO, new SPNegoSchemeFactory(true));
         final Credentials use_jaas_creds = new Credentials() {
 
             @Override
@@ -206,10 +209,31 @@ public abstract class Commons {
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>> " + serviceSubject.toString());
     }
 
-    protected static Subject login() throws LoginException {
+    protected static Subject login() throws LoginException, MalformedURLException {
         LOG.debug("Trying login with {} configuration in {} keytab file", JAAS_CONF, KEYTAB_FILENAME);
         LoginContext lc = new LoginContext(JAAS_CONF);
         lc.login();
         return lc.getSubject();
+    }
+
+    protected static Subject kerberosLogin() throws LoginException, MalformedURLException {
+        LOG.debug("Trying login with {} configuration in {} keytab file", JAAS_CONF, KEYTAB_FILENAME);
+
+        Subject subject = login();
+        final Krb5LoginModule krb5 = new Krb5LoginModule();
+
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("client", "true");
+        map.put("refreshKrb5Config", "true");
+        map.put("useKeyTab", "true");
+        map.put("debug", "true");
+        map.put("keyTab", "/var/tmp/ebano.keytab");
+        map.put("principal", "HTTP/ebano.tirasa.net");
+
+        krb5.initialize(subject, null, null, map);
+        krb5.login();
+        krb5.commit();
+
+        return subject;
     }
 }
