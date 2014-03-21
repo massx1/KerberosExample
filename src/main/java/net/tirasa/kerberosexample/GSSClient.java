@@ -1,6 +1,10 @@
 package net.tirasa.kerberosexample;
 
 import static net.tirasa.kerberosexample.Commons.LOG;
+
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Set;
@@ -11,15 +15,16 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
-import org.ietf.jgss.Oid;
 import sun.misc.BASE64Encoder;
 
 public class GSSClient extends Commons {
 
-    public static void main(final String args[]) throws Throwable {
+    public static void main(final String args[]) throws LoginException, NoSuchAlgorithmException, KeyManagementException,
+            IOException {
         setProperties();
-        final String ticket = retrieveTicket("HTTP/ebano.tirasa.net");
-        LOG.debug("TICKET {}", ticket);
+        final String ticket = retrieveTicket("ldap/olmo.tirasa.net");
+        LOG.debug("Calling server with ticket {}", ticket);
+        postWithTicket(ticket);
     }
 
     public static String retrieveTicket(final String applicationPrincipal) throws LoginException {

@@ -142,9 +142,10 @@ public abstract class Commons {
         LOG.debug("Properties set ok");
     }
 
-    protected static void postWithTicket(final String ticket) throws NoSuchAlgorithmException, KeyManagementException,
-            IOException {
-        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+    protected static void postWithTicket(final String ticket) throws
+            NoSuchAlgorithmException,
+            KeyManagementException {
+        final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
 
             @Override
             public java.security.cert.X509Certificate[] getAcceptedIssuers() {
@@ -161,12 +162,11 @@ public abstract class Commons {
         }
         };
 
-        // Install the all-trusting trust manager
-        SSLContext sc = SSLContext.getInstance("SSL");
+        final SSLContext sc = SSLContext.getInstance("SSL");
         sc.init(null, trustAllCerts, new java.security.SecureRandom());
         HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 
-        HostnameVerifier allHostsValid = new HostnameVerifier() {
+        final HostnameVerifier allHostsValid = new HostnameVerifier() {
 
             @Override
             public boolean verify(String hostname, SSLSession session) {
@@ -176,17 +176,24 @@ public abstract class Commons {
 
         HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
-        URL url = new URL("https://olmo.tirasa.net/ipa/json");
-        URLConnection con = url.openConnection();
-        con.setRequestProperty("Authorization", "Negotiate: " + Base64.encode(ticket.getBytes()));
-        Reader reader = new InputStreamReader(con.getInputStream());
+        try {
+            final URL url = new URL("https://olmo.tirasa.net/ipa/json");
 
-        while (true) {
-            int ch = reader.read();
-            if (ch == -1) {
-                break;
+            LOG.debug("URL set to {}", url);
+
+            final URLConnection con = url.openConnection();
+            con.setRequestProperty("Authorization", "Negotiate: " + Base64.encode(ticket.getBytes()));
+            final Reader reader = new InputStreamReader(con.getInputStream());
+
+            while (true) {
+                int ch = reader.read();
+                if (ch == -1) {
+                    break;
+                }
+                LOG.debug("RETURN STATUS {}", (char) ch);
             }
-            System.out.print((char) ch);
+        } catch (IOException ioe) {
+            LOG.error("IOE ", ioe);
         }
     }
 
