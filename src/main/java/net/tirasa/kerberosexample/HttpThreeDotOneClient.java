@@ -8,7 +8,7 @@ import java.security.UnrecoverableKeyException;
 import javax.security.auth.login.LoginException;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-public class HttpClientExample extends Commons {
+public class HttpThreeDotOneClient extends Commons {
 
     public static void main(final String[] args) throws IOException, NoSuchAlgorithmException, KeyManagementException,
             LoginException, KeyStoreException, UnrecoverableKeyException {

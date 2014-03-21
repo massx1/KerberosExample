@@ -91,29 +91,6 @@
   
   <profiles>
     <profile>
-      <id>token</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.2.1</version>
-            <executions>
-              <execution>
-                <phase>package</phase>
-                <goals>
-                  <goal>java</goal>
-                </goals>
-                <configuration>
-                  <mainClass>net.tirasa.test.freeipa.Token</mainClass>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
       <id>httpclient</id>
       <build>
         <plugins>
@@ -128,7 +105,7 @@
                   <goal>java</goal>
                 </goals>
                 <configuration>
-                  <mainClass>net.tirasa.kerberosexample.HttpClientExample</mainClass>
+                  <mainClass>net.tirasa.kerberosexample.HttpThreeDotOneClient</mainClass>
                 </configuration>
               </execution>
             </executions>
@@ -151,7 +128,7 @@
                   <goal>java</goal>
                 </goals>
                 <configuration>
-                  <mainClass>net.tirasa.test.freeipa.FreeIPATwo</mainClass>
+                  <mainClass>net.tirasa.kerberosexample.CXFClient</mainClass>
                 </configuration>
               </execution>
             </executions>
