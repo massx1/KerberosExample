@@ -70,20 +70,23 @@ public abstract class Commons {
 
     protected final static String KEYTAB_FILENAME = "/var/tmp/ebano.keytab";
 
-    protected static DefaultHttpClient getClient() throws NoSuchAlgorithmException, KeyManagementException,
-            KeyStoreException, UnrecoverableKeyException {
-        TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
+    protected static DefaultHttpClient createHttpClientForKerberosAuth() throws
+            NoSuchAlgorithmException,
+            KeyManagementException,
+            KeyStoreException,
+            UnrecoverableKeyException {
+        final TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
 
             @Override
             public boolean isTrusted(final X509Certificate[] certificate, String authType) {
                 return true;
             }
         };
-        SSLSocketFactory sf = new SSLSocketFactory(acceptingTrustStrategy,
+        final SSLSocketFactory sf = new SSLSocketFactory(acceptingTrustStrategy,
                 SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-        SchemeRegistry registry = new SchemeRegistry();
+        final SchemeRegistry registry = new SchemeRegistry();
         registry.register(new Scheme("https", 443, sf));
-        ClientConnectionManager ccm = new PoolingClientConnectionManager(registry);
+        final ClientConnectionManager ccm = new PoolingClientConnectionManager(registry);
 
         final DefaultHttpClient httpclient = new DefaultHttpClient(ccm);
 
@@ -108,6 +111,7 @@ public abstract class Commons {
 
     protected static HttpPost createRequest() throws UnsupportedEncodingException {
         final HttpPost request = new HttpPost("https://olmo.tirasa.net/ipa/json");
+        LOG.debug("Creating requet to {}", request.getURI());
         final List<NameValuePair> params = new ArrayList<NameValuePair>(2);
         params.add(new BasicNameValuePair("method", "user_find"));
         params.add(new BasicNameValuePair("params", "all"));
@@ -119,16 +123,14 @@ public abstract class Commons {
         return request;
     }
 
-    protected static void printResponse(HttpResponse response) throws ParseException, IOException {
+    protected static void printResponse(final HttpResponse response) throws ParseException, IOException {
         final HttpEntity entity = response.getEntity();
 
-        System.out.println("----------------------------------------");
-        System.out.println(response.getStatusLine());
-        System.out.println("----------------------------------------");
+        LOG.debug("Response status {}", response.getStatusLine());
+
         if (entity != null) {
-            System.out.println(EntityUtils.toString(entity));
+            LOG.debug("response \n {}", EntityUtils.toString(entity));
         }
-        System.out.println("----------------------------------------");
         EntityUtils.consume(entity);
     }
 

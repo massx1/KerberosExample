@@ -22,7 +22,7 @@ public class GSSClient extends Commons {
     public static void main(final String args[]) throws LoginException, NoSuchAlgorithmException, KeyManagementException,
             IOException {
         setProperties();
-        final String ticket = retrieveTicket("ldap/olmo.tirasa.net");
+        final String ticket = retrieveTicket("HTTP/olmo.tirasa.net");
         LOG.debug("Calling server with ticket {}", ticket);
         postWithTicket(ticket);
     }

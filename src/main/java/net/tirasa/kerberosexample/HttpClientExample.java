@@ -13,7 +13,8 @@ public class HttpClientExample extends Commons {
     public static void main(final String[] args) throws IOException, NoSuchAlgorithmException, KeyManagementException,
             LoginException, KeyStoreException, UnrecoverableKeyException {
         setProperties();
-        final DefaultHttpClient httpclient = getClient();
+        final DefaultHttpClient httpclient = createHttpClientForKerberosAuth();
+        LOG.debug("Client kerberos created");
 
         try {
             printResponse(httpclient.execute(createRequest()));

@@ -27,7 +27,7 @@ public class FreeIPAThree extends Commons {
         final String ticket = retrieveTicket();
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MASSIMILIANO" + ticket);
 
-        final DefaultHttpClient httpclient = getClient();
+        final DefaultHttpClient httpclient = createHttpClientForKerberosAuth();
 
         HttpParams params = new BasicHttpParams();
         HttpClientParams.setRedirecting(params, true);

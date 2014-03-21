@@ -37,7 +37,22 @@
   </logger>
   
   <logger name="org.apache.http" additivity="false">
-    <level value="OFF"/>
+    <level value="DEBUG"/>
+    <appender-ref ref="main"/>
+  </logger>
+  
+  <logger name="java.security" additivity="false">
+    <level value="DEBUG"/>
+    <appender-ref ref="main"/>
+  </logger>
+  
+  <logger name="java.io" additivity="false">
+    <level value="DEBUG"/>
+    <appender-ref ref="main"/>
+  </logger>
+  
+  <logger name="javax.net.ssl" additivity="false">
+    <level value="DEBUG"/>
     <appender-ref ref="main"/>
   </logger>
   
