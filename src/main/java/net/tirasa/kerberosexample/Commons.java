@@ -63,6 +63,12 @@ public abstract class Commons {
 
     protected final static String KEYTAB_FILENAME = config.getString("keytab.filename");
 
+    protected final static String JAAS_FILENAME = config.getString("jaas.file");
+
+    protected final static String KRB_REALM = config.getString("krb.realm");
+
+    protected final static String KRB_SERVER = config.getString("krb.server");
+
     protected final static Oid KERB_V5_OID;
 
     protected final static Oid KRB5_PRINCIPAL_NAME_OID;
@@ -141,12 +147,12 @@ public abstract class Commons {
     }
 
     protected static void setProperties() {
-        System.setProperty("java.security.auth.login.config", "/var/tmp/jass.conf");
+        System.setProperty("java.security.auth.login.config", JAAS_FILENAME);
         System.setProperty("sun.security.krb5.debug", "true");
         System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
-        System.setProperty("target.service.principal.name", "ldap/olmo.tirasa.net");
-        System.setProperty("java.security.krb5.realm", "TIRASA.NET");
-        System.setProperty("java.security.krb5.kdc", "olmo.tirasa.net");
+        System.setProperty("target.service.principal.name", SERVICE_PRINCIPAL_NAME);
+        System.setProperty("java.security.krb5.realm", KRB_REALM);
+        System.setProperty("java.security.krb5.kdc", KRB_SERVER);
         LOG.debug("Properties set ok");
     }
 
