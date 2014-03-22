@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -52,9 +53,15 @@ import org.slf4j.LoggerFactory;
 
 public abstract class Commons {
 
+    final static ResourceBundle config = ResourceBundle.getBundle("config");
+
     protected static final org.slf4j.Logger LOG = LoggerFactory.getLogger(Commons.class);
 
-    protected static final String SERVICE_PRINCIPAL_NAME = "ldap/olmo.tirasa.net";
+    protected static final String SERVICE_PRINCIPAL_NAME = config.getString("service.principal.name");
+
+    protected final static String JAAS_CONF = config.getString("jaas.config");
+
+    protected final static String KEYTAB_FILENAME = config.getString("keytab.filename");
 
     protected final static Oid KERB_V5_OID;
 
@@ -69,10 +76,6 @@ public abstract class Commons {
             throw new Error(ex);
         }
     }
-
-    protected final static String JAAS_CONF = "un.security.jgss.login";
-
-    protected final static String KEYTAB_FILENAME = "/var/tmp/ebano.keytab";
 
     protected static DefaultHttpClient createHttpClientForKerberosAuth() throws
             NoSuchAlgorithmException,
