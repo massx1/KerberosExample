@@ -153,7 +153,7 @@ public abstract class Commons {
 
     protected static void setProperties() {
         System.setProperty("java.security.auth.login.config", JAAS_FILENAME);
-        System.setProperty("sun.security.krb5.debug", "true");
+//        System.setProperty("sun.security.krb5.debug", "true");
         System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
         System.setProperty("target.service.principal.name", SERVICE_PRINCIPAL_NAME);
         System.setProperty("java.security.krb5.realm", KRB_REALM);
