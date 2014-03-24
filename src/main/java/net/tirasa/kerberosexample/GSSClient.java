@@ -34,8 +34,8 @@ public class GSSClient extends Commons {
 
     public static String retrieveTicket(final String applicationPrincipal) throws LoginException,
             PrivilegedActionException, MalformedURLException {
-//        final Subject subject = login();
-        final Subject subject = kerberosLogin();
+        final Subject subject = login();
+//        final Subject subject = kerberosLogin();
 
         LOG.debug("Authenticated with {}", subject);
 

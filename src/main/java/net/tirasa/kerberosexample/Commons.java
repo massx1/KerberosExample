@@ -16,9 +16,11 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -26,6 +28,9 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.Subject;
+import javax.security.auth.kerberos.KerberosPrincipal;
+import javax.security.auth.login.AppConfigurationEntry;
+import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 import javax.ws.rs.core.MediaType;
@@ -153,6 +158,7 @@ public abstract class Commons {
         System.setProperty("target.service.principal.name", SERVICE_PRINCIPAL_NAME);
         System.setProperty("java.security.krb5.realm", KRB_REALM);
         System.setProperty("java.security.krb5.kdc", KRB_SERVER);
+        System.setProperty("KRB5CCNAME", "HTTP/ebano.tirasa.net@TIRASA.NET");
         LOG.debug("Properties set ok");
     }
 
@@ -228,21 +234,44 @@ public abstract class Commons {
     protected static Subject kerberosLogin() throws LoginException, MalformedURLException {
         LOG.debug("Trying login with {} configuration in {} keytab file", JAAS_CONF, KEYTAB_FILENAME);
 
-        Subject subject = login();
-        final Krb5LoginModule krb5 = new Krb5LoginModule();
+        Set<Principal> principals = new HashSet<Principal>();
+//        principals.add(new KerberosPrincipal("HTTP/ebano.tirasa.net"));
+        Subject subject = new Subject(false, principals, new HashSet<Object>(), new HashSet<Object>());
+        KerberosConfiguration kerberosConfiguration = new KerberosConfiguration();
 
-        Map<String, String> map = new HashMap<String, String>();
-        map.put("client", "true");
-        map.put("refreshKrb5Config", "true");
-        map.put("useKeyTab", "true");
-        map.put("debug", "true");
-        map.put("keyTab", "/var/tmp/ebano.keytab");
-        map.put("principal", "HTTP/ebano.tirasa.net");
+        LoginContext loginContext = new LoginContext(JAAS_CONF, subject, null, kerberosConfiguration);
+        loginContext.login();
 
-        krb5.initialize(subject, null, null, map);
-        krb5.login();
-        krb5.commit();
+        return loginContext.getSubject();
+    }
 
-        return subject;
+    private static class KerberosConfiguration extends Configuration {
+
+        public KerberosConfiguration() {
+        }
+
+        @Override
+        public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
+            Map<String, String> options = new HashMap<String, String>();
+            options.put("keyTab", KEYTAB_FILENAME);
+            options.put("principal", "HTTP/ebano.tirasa.net");
+            options.put("useKeyTab", "true");
+            options.put("storeKey", "true");
+            options.put("doNotPrompt", "true");
+            options.put("useTicketCache", "true");
+            options.put("renewTGT", "true");
+//            options.put("isInitiator", "false");
+            options.put("refreshKrb5Config", "true");
+            options.put("useDefaultCcache", "true");
+            options.put("renewTGT", "true");
+            options.put("credsType", "both");
+
+            System.setProperty("KRB5CCNAME", "HTTP/ebano.tirasa.net@TIRASA.NET");
+            
+            return new AppConfigurationEntry[]{
+                new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule",
+                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED,
+                options),};
+        }
     }
 }
