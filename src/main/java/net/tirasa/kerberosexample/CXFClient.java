@@ -1,6 +1,5 @@
 package net.tirasa.kerberosexample;
 
-import static net.tirasa.kerberosexample.Commons.KRB5_PRINCIPAL_NAME_OID;
 import static org.apache.cxf.transport.http.auth.HttpAuthHeader.AUTH_TYPE_NEGOTIATE;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +13,6 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.login.LoginException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.cxf.configuration.jsse.TLSClientParameters;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.helpers.IOUtils;
@@ -22,21 +20,14 @@ import org.apache.cxf.interceptor.LoggingOutInterceptor;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.apache.cxf.jaxrs.security.KerberosAuthOutInterceptor;
 import org.apache.cxf.jaxrs.security.KerberosAuthenticationFilter;
-import org.apache.cxf.jaxrs.security.KerberosAuthenticationFilter.KerberosSecurityContext;
-import org.apache.cxf.phase.PhaseInterceptorChain;
 import org.apache.cxf.transport.http.HTTPConduit;
-import org.ietf.jgss.GSSContext;
-import org.ietf.jgss.GSSCredential;
-import org.ietf.jgss.GSSException;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
 
 public class CXFClient extends Commons {
 
     private static WebClient wc;
 
     public static void main(String[] args) throws LoginException, NoSuchAlgorithmException, KeyManagementException,
-            IOException, GSSException {
+            IOException {
         setProperties();
         initWebClient();
 
@@ -78,7 +69,7 @@ public class CXFClient extends Commons {
         return policy;
     }
 
-    public static void initWebClient() throws NoSuchAlgorithmException, KeyManagementException, GSSException {
+    public static void initWebClient() throws NoSuchAlgorithmException, KeyManagementException {
         wc = WebClient.create("https://olmo.tirasa.net/ipa/json");
         final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
 
@@ -111,40 +102,6 @@ public class CXFClient extends Commons {
 //        wc.header("referer", "https://olmo.tirasa.net/ipa");
         wc.type(MediaType.APPLICATION_JSON);
         wc.accept(MediaType.APPLICATION_JSON);
-
-//        SecurityContext securityContext = PhaseInterceptorChain.getCurrentMessage().get(SecurityContext.class);
-//
-//        if (securityContext instanceof KerberosSecurityContext) {
-//            KerberosSecurityContext ksc = (KerberosSecurityContext) securityContext;
-//            GSSCredential cred = ksc.getGSSContext().getDelegCred();
-//            if (cred != null) {
-//                WebClient.getConfig(wc).getRequestContext().put(GSSCredential.class.getName(), cred);
-//            }
-//        }
-        final GSSManager manager = GSSManager.getInstance();
-        final GSSName clientName = manager.createName("HTTP/ebano.tirasa.net", KRB5_PRINCIPAL_NAME_OID);
-
-        LOG.debug("GSSname client name created {}", clientName);
-
-        final GSSCredential clientCred = manager.createCredential(clientName,
-                8 * 3600,
-                KERB_V5_OID,
-                GSSCredential.INITIATE_ONLY);
-
-        LOG.debug("GSSCredentials created {}", clientCred);
-
-        final GSSName serverName = manager.createName(SERVICE_PRINCIPAL_NAME, KRB5_PRINCIPAL_NAME_OID);
-
-        LOG.debug("GSSName server name created {}", serverName);
-
-        final GSSContext context = manager.createContext(serverName,
-                KERB_V5_OID,
-                clientCred,
-                GSSContext.DEFAULT_LIFETIME);
-        KerberosAuthenticationFilter.KerberosPrincipal principal = new KerberosAuthenticationFilter.KerberosPrincipal(
-                "ebano.tirasa.net", "HTTP/ebano.tirasa.net");
-//        KerberosSecurityContext k = new KerberosSecurityContext(principal, context);
-        WebClient.getConfig(wc).getRequestContext().put(GSSCredential.class.getName(), context.getDelegCred());
 
         LOG.debug("Web client created successfully");
     }
