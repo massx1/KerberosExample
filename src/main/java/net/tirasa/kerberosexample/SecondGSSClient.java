@@ -9,6 +9,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.Socket;
@@ -35,6 +36,7 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
+import sun.misc.BASE64Encoder;
 
 public class SecondGSSClient extends Commons {
 
@@ -121,10 +123,6 @@ public class SecondGSSClient extends Commons {
 
             LOG.debug("GSSContext created {}", context);
 
-            context.requestMutualAuth(true);
-            context.requestConf(false);
-            context.requestInteg(true);
-
             // Set the desired optional features on the context. The client
             // chooses these options.
             context.requestMutualAuth(true);  // Mutual authentication
@@ -132,8 +130,6 @@ public class SecondGSSClient extends Commons {
             context.requestInteg(true); // Will use integrity later
 
             // Do the context eastablishment loop
-            byte[] token = new byte[0];
-
             final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
 
                 @Override
@@ -164,27 +160,42 @@ public class SecondGSSClient extends Commons {
             };
 
             HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
-
+            URLConnection con = null;
+            OutputStream o = null;
             while (!context.isEstablished()) {
 
-                token = context.initSecContext(token, 0, token.length);
+                final byte[] token = context.initSecContext(new byte[0], 0, 0);
 
                 try {
                     final URL url = new URL("https://olmo.tirasa.net/ipa/json");
 
                     LOG.debug("URL set to {}", url);
 
-                    final URLConnection con = url.openConnection();
-                    con.setRequestProperty("Authorization", "Negotiate: " + Base64.encode(token));
-                    final Reader reader = new InputStreamReader(con.getInputStream());
+                    con = url.openConnection();
 
-                    while (true) {
-                        int ch = reader.read();
-                        if (ch == -1) {
-                            break;
-                        }
-                        LOG.debug("RETURN STATUS {}", (char) ch);
+                    con.setRequestProperty("Authorization", "Negotiate: " + Base64.encode(token));
+                    con.setDoOutput(true);
+                    con.setDoInput(true);
+
+                    if (token != null) {
+                        o = con.getOutputStream();
+                        StringBuilder outputBuffer = new StringBuilder();
+                        outputBuffer.append(String.format("Src Name: %s\n", context.getSrcName()));
+                        outputBuffer.append(String.format("Target  : %s\n", context.getTargName()));
+                        outputBuffer.append(new BASE64Encoder().encode(token));
+                        outputBuffer.append("\n");
+                        o.write(outputBuffer.toString().getBytes());
+                        o.flush();
                     }
+//                    final Reader reader = new InputStreamReader(con.getInputStream());
+//
+//                    while (true) {
+//                        int ch = reader.read();
+//                        if (ch == -1) {
+//                            break;
+//                        }
+//                        LOG.debug("RETURN STATUS {}", (char) ch);
+//                    }
                 } catch (IOException ioe) {
                     LOG.error("IOE ", ioe);
                 }
@@ -194,69 +205,27 @@ public class SecondGSSClient extends Commons {
                 // initSecContext
                 if (token != null) {
 
-                    outStream.writeInt(token.length);
-                    outStream.write(token);
-                    outStream.flush();
+                    StringBuilder outputBuffer = new StringBuilder();
+                    outputBuffer.append(String.format("Src Name: %s\n", context.getSrcName()));
+                    outputBuffer.append(String.format("Target  : %s\n", context.getTargName()));
+                    outputBuffer.append(new BASE64Encoder().encode(token));
+                    outputBuffer.append("\n");
+                    o = con.getOutputStream();
+                    o.write(outputBuffer.toString().getBytes());
+                    o.flush();
                 }
 
                 // If the client is done with context establishment
                 // then there will be no more tokens to read in this loop
-                if (!context.isEstablished()) {
-                    token = new byte[inStream.readInt()];
-                    inStream.readFully(token);
-                }
+//                if (!context.isEstablished()) {
+//                    token = new byte[inStream.readInt()];
+//                    inStream.readFully(token);
+//                }
             }
 
             System.out.println("Context Established! ");
             System.out.println("Client principal is " + context.getSrcName());
             System.out.println("Server principal is " + context.getTargName());
-
-            /*
-             * If mutual authentication did not take place, then only the
-             * client was authenticated to the server. Otherwise, both
-             * client and server were authenticated to each other.
-             */
-            if (context.getMutualAuthState()) {
-                System.out.println("Mutual authentication took place!");
-            }
-
-            byte[] messageBytes = "Hello There!".getBytes("UTF-8");
-
-            /*
-             * The first MessageProp argument is 0 to request
-             * the default Quality-of-Protection.
-             * The second argument is true to request
-             * privacy (encryption of the message).
-             */
-            MessageProp prop = new MessageProp(0, true);
-
-            /*
-             * Encrypt the data and send it across. Integrity protection
-             * is always applied, irrespective of confidentiality
-             * (i.e., encryption).
-             * You can use the same token (byte array) as that used when
-             * establishing the context.
-             */
-            System.out.println("Sending message: " + new String(messageBytes, "UTF-8"));
-            token = context.wrap(messageBytes, 0, messageBytes.length, prop);
-            outStream.writeInt(token.length);
-            outStream.write(token);
-            outStream.flush();
-
-            /*
-             * Now we will allow the server to decrypt the message,
-             * append a time/date on it, and send then it back.
-             */
-            token = new byte[inStream.readInt()];
-            System.out.println("Will read token of size " + token.length);
-            inStream.readFully(token);
-            byte[] replyBytes = context.unwrap(token, 0, token.length, prop);
-
-            System.out.println("Received message: " + new String(replyBytes, "UTF-8"));
-
-            System.out.println("Done.");
-            context.dispose();
-            socket.close();
 
             return null;
         }
